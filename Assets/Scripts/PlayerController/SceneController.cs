@@ -2,7 +2,7 @@
 using UnityEngine.SceneManagement;
 
 public class SceneController : MonoBehaviour {
-    private static SceneController Controller;
+    private static SceneController Instance;
 
     private string CurrentSceneName;
     private string NextSceneName;
@@ -16,22 +16,22 @@ public class SceneController : MonoBehaviour {
     
     public static void SwitchScene (string nextSceneName)
     {
-        if (Controller != null)
-        {
-            if (Controller.CurrentSceneName != nextSceneName)
+        //if (Controller != null)
+        //{
+            if (Instance.CurrentSceneName != nextSceneName)
             {
-                Controller.NextSceneName = nextSceneName;
+                Instance.NextSceneName = nextSceneName;
             }
-        }
+        //}
     }
 
     protected void Awake ()
     {
+        //Setup singleton instance
+        Instance = this;
+
         //Keep this object alive between scene changes
         DontDestroyOnLoad(gameObject);
-
-        //Setup singleton instance
-        Controller = this;
 
         //Setup the array of UpdateDelegates
         UpdateDelegates = new UpdateDelegate[(int)SceneState.Count];
@@ -63,9 +63,9 @@ public class SceneController : MonoBehaviour {
         }
 
         //Clean up the singleton instance
-        if (Controller != null)
+        if (Instance != null)
         {
-            Controller = null;
+            Instance = null;
         }
     }
 
