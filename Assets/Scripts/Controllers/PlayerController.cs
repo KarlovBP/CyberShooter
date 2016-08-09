@@ -4,7 +4,6 @@ public class PlayerController : MonoBehaviour
 {
     public AbstractWeapon[] Weapons;
     public float PlayerSpeed;
-
     private int floorMask;
     private int currentWeaponIndex;
     private int CurrentWeaponIndex
