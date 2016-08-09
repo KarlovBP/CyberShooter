@@ -1,10 +1,14 @@
 ﻿using UnityEngine;
 
+[RequireComponent(typeof (CharacterController))]
 public class PlayerController : MonoBehaviour
 {
     public AbstractWeapon[] Weapons;
     public float PlayerSpeed;
-    private int floorMask;
+    public float PlayerRotationSpeed;
+
+    private new Camera camera;
+    private CharacterController controller;
     private int currentWeaponIndex;
     private int CurrentWeaponIndex
     {
@@ -25,13 +29,15 @@ public class PlayerController : MonoBehaviour
     // ReSharper disable once UnusedMember.Local
     private void Start()
     {
-        floorMask = LayerMask.GetMask("Floor");
+        controller = GetComponent<CharacterController>();
+        camera = Camera.main;
+        LayerMask.GetMask("Floor");
         CurrentWeaponIndex = 0;
         ActivateCurrentWeapon();
     }
 
     // ReSharper disable once UnusedMember.Local
-    private void FixedUpdate()
+    private void Update()
     {
         Movement();
         ButtonInput();
@@ -39,29 +45,25 @@ public class PlayerController : MonoBehaviour
 
     private void Movement()
     {
-        float h = Input.GetAxis("Horizontal");
-        float v = Input.GetAxis("Vertical");
+        Vector3 mousePos = Input.mousePosition;
 
-        if (Mathf.Abs(h) + Mathf.Abs(v) > 1)
-        {
-            h *= 0.5f;
-            v *= 0.5f;
-        }
+        mousePos = camera.ScreenToWorldPoint(new Vector3(mousePos.x, mousePos.y,
+            camera.transform.position.y - transform.position.y));
 
-        transform.position = transform.position + transform.forward*v*PlayerSpeed;
-        transform.position = transform.position + transform.right*h*PlayerSpeed;
+        var rotation = Quaternion.LookRotation(mousePos - new Vector3(transform.position.x, 0, transform.position.z));
+        transform.eulerAngles = Vector3.up
+                                *Mathf.MoveTowardsAngle(transform.eulerAngles.y, rotation.eulerAngles.y,
+                                    PlayerRotationSpeed*Time.deltaTime);
 
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
+        Vector3 input = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxis("Vertical"));
+        Vector3 motion = input;
 
-        if (Physics.Raycast(ray, out hit, 100f, floorMask))
-        {
-            Vector3 playerToMouse = hit.point - transform.position;
-            playerToMouse.y = 0.0f;
+        motion *= Mathf.Abs(input.x) == 1 && Mathf.Abs(input.z) == 1
+            ? 0.7f
+            : 1f;
+        motion *= PlayerSpeed;
 
-            Quaternion newRotation = Quaternion.LookRotation(playerToMouse);
-            transform.rotation = newRotation;
-        }
+        controller.Move(motion*Time.deltaTime);
     }
 
     private void ButtonInput()
